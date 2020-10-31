@@ -1,0 +1,51 @@
+{% extends 'app/base.html' %}
+
+{% block container %}
+<div class="container">
+    <div class="page-header">
+        <h1>个人助力</h1>
+    </div>
+    <div class="alert alert-warning" role="alert">个人助力有每日上限，为 5 次。</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>今日助力次数</th>
+                <th>今日被助力次数</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in user_list %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.extension.help_num }}</td>
+                <td>{{ user.extension.be_helped_num }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div style="text-align:right">
+        <button class="btn btn-primary" data-clipboard-text="{{ url }}">复制所有助力链接</button>
+    </div>
+    <form class="form-login" action="{% url 'help_home' %}" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="id_list" value="{{ id_list }}">
+        <div class="checkbox">
+            <label>
+                <input type="checkbox" required="required">我确认已经完成助力了
+            </label>
+        </div>
+        <button type="submit" class="btn btn-lg btn-primary btn-block" type="submit">完成</button>
+    </form>
+</div>
+
+{% load static %}
+<script src="{% static 'app/clipboard.min.js' %}"></script>
+<script>
+    var clipboard = new ClipboardJS('.btn');
+    clipboard.on('success', function (e) {
+        alert('已复制到粘贴板')
+        e.clearSelection();
+    });
+</script>
+{% endblock container %}

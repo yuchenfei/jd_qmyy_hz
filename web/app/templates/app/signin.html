@@ -1,0 +1,29 @@
+{% extends 'app/base.html' %}
+
+{% block extrahead %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'app/signin.css' %}">
+{% endblock %}
+
+{% block container %}
+<div class="container">
+    <form class="form-login" action="{% url 'signin' %}" method="post">
+        {% csrf_token %}
+        <h2 class="form-login-heading">填写链接</h2>
+        <div class="form-group">
+            <label for="homeLink">我的助力链接</label>
+            <textarea class="form-control" id="homeLink" name="home_link" required="required" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="cbdLink">我的商圈链接</label>
+            <textarea class="form-control" id="cbdLink" name="cbd_link" required="required" rows="3"></textarea>
+        </div>
+        {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        <button type="submit" class="btn btn-lg btn-primary btn-block" type="submit">提交</button>
+    </form>
+</div>
+{% endblock container %}

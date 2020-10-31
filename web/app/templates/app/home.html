@@ -1,0 +1,24 @@
+{% extends 'app/base.html' %}
+
+{% block container %}
+<div class="container">
+  <div class="page-header">
+    <h1>今日信息</h1>
+  </div>
+  <div class="alert alert-info" role="alert">每日助力他人后才会出现在别人的助力列表里，个人助力和商圈助力数据独立。</div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2>个人助力</h2>
+      <p class="lead">已助力 {{ user.extension.help_num }} 次</p>
+      <p class="lead">被助力 {{ user.extension.be_helped_num }} 次</p>
+      <a class="btn btn-primary" href="{% url 'help_home' %}">去助力</a>
+    </div>
+    <div class="col-md-6">
+      <h2>商圈助力</h2>
+      <p class="lead">已助力 {{ user.extension.cbd_help_num }} 次</p>
+      <p class="lead">被助力 {{ user.extension.cbd_be_helped_num }} 次</p>
+      <a class="btn btn-primary" href="{% url 'help_cbd' %}">去助力</a>
+    </div>
+  </div>
+</div>
+{% endblock container %}
