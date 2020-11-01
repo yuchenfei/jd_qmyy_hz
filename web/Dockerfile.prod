@@ -16,9 +16,7 @@ ENV TZ=Asia/Shanghai
 # install psycopg2 dependencies
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
 RUN apk update \
-    && apk add postgresql-dev gcc python3-dev musl-dev tzdata
-
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+    && apk add postgresql-dev gcc python3-dev musl-dev
 
 # lint
 RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip
@@ -52,10 +50,13 @@ RUN mkdir $APP_HOME/static
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apk update && apk add libpq
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apk/repositories
+RUN apk update && apk add libpq tzdata
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install --no-cache -i https://pypi.tuna.tsinghua.edu.cn/simple /wheels/*
+
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # copy entrypoint-prod.sh
 COPY ./entrypoint.prod.sh $APP_HOME
