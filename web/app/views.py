@@ -18,7 +18,7 @@ home_url = r'https://bunearth.m.jd.com/babelDiy/Zeus/4SJUHwGdUQYgg94PFzjZZbGZRjD
 cbd_url = r'https://bunearth.m.jd.com/babelDiy/Zeus/4SJUHwGdUQYgg94PFzjZZbGZRjDd/index.html?shareType=cbdDay&inviteId='
 
 
-def _update_info(user):
+def _update_info(request, user):
     """每日首次登录更新信息"""
     today = datetime.date.today()
     if user.last_login and not user.last_login.date() == today:
@@ -32,6 +32,8 @@ def _update_info(user):
         user.extension.cbd_be_helped_num = base_query.filter(
             target=user, help_type=1).count()
         user.save()
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
 
 
 def signin(request):
@@ -48,12 +50,12 @@ def signin(request):
                 user = User.objects.create_user(username=home_id)
                 user.extension.cbd = cbd_id
                 user.save()
+                # 无密码登录
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user)
             else:  # 已加入用户
                 user = query[0]
-                _update_info(user)
-            # 无密码登录
-            user.backend = 'django.contrib.auth.backends.ModelBackend'
-            login(request, user)
+                _update_info(request, user)
             return redirect('home')
         else:
             messages.warning(request, '助力链接或商圈链接格式不正确，请检查后重试')
@@ -69,7 +71,7 @@ def home(request):
     user = request.user
     if user.is_anonymous:
         return redirect('signin')
-    _update_info(user)
+    _update_info(request, user)
     return render(request, 'app/home.html')
 
 
