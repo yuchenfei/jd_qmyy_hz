@@ -118,10 +118,10 @@ def help_cbd(request):
     today = datetime.date.today()
     query = base_query.filter(last_login__contains=today,
                               extension__cbd_help_num__gt=0)
-    if query.count() < 2:
+    if query.count() < 5:
         query = base_query.all()
 
-    user_list = query.order_by('extension__cbd_be_helped_num')[:2]
+    user_list = query.order_by('extension__cbd_be_helped_num')[:5]
     data = {}
     data['user_list'] = user_list
     data['id_list'] = ','.join([user.username for user in user_list])
