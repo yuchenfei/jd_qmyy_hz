@@ -21,8 +21,8 @@ RUN apk update \
     && apk add postgresql-dev gcc python3-dev musl-dev
 
 # lint
-RUN pip install --upgrade pip
-RUN pip install flake8
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip
+RUN pip install -i https://pypi.tuna.tsinghua.edu.cn/simple flake8
 COPY . .
 #RUN flake8 --ignore=E501,F401 .
 
