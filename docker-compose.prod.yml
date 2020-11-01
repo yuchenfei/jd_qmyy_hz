@@ -5,7 +5,9 @@ services:
     build:
         context: ./web
         dockerfile: Dockerfile.prod
-    command: gunicorn jd_quyy_hz.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn jd_quyy_hz.wsgi:application --bind 0.0.0.0:8080
+    volumes:
+      - ./static:/home/app/web/static
     ports:
       - 8080:8080
     env_file:
