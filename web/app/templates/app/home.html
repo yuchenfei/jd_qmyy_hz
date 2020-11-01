@@ -20,5 +20,13 @@
       <a class="btn btn-primary" href="{% url 'help_cbd' %}">去助力</a>
     </div>
   </div>
+  <div class="page-header">
+    <h1>我的信息</h1>
+  </div>
+  <div class="alert alert-warning" role="alert">商圈助力链接最后几位每天可能会有变化，可以通过退出登录后重新输入助力链接进行更新。</div>
+  <ul class="list-group">
+    <li class="list-group-item"><span class="label label-default">我的助力链接</span> {{ help_home_url }}</li>
+    <li class="list-group-item"><span class="label label-default">商圈助力链接</span> {{ help_cbd_url }}</li>
+  </ul>
 </div>
 {% endblock container %}

@@ -51,11 +51,14 @@ def signin(request):
                 user.extension.cbd = cbd_id
                 user.save()
                 # 无密码登录
-                user.backend = 'django.contrib.auth.backends.ModelBackend'
-                login(request, user)
             else:  # 已加入用户
                 user = query[0]
+                if not cbd_id == user.extension.cbd:
+                    user.extension.cbd = cbd_id
+                    user.save()
                 _update_info(request, user)
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user)
             return redirect('home')
         else:
             messages.warning(request, '助力链接或商圈链接格式不正确，请检查后重试')
@@ -72,7 +75,10 @@ def home(request):
     if user.is_anonymous:
         return redirect('signin')
     _update_info(request, user)
-    return render(request, 'app/home.html')
+    data = {}
+    data['help_home_url'] = home_url + user.username
+    data['help_cbd_url'] = cbd_url + user.extension.cbd
+    return render(request, 'app/home.html', data)
 
 
 def help_home(request):
