@@ -29,5 +29,5 @@ class Log(models.Model):
     target = models.ForeignKey(User,
                                on_delete=models.CASCADE,
                                related_name='be_help')
-    help_type = models.BooleanField()  # 0:home 1:cdb
+    help_type = models.IntegerField()  # 0:home 1:cdb
     date_time = models.DateTimeField(auto_now_add=True)
