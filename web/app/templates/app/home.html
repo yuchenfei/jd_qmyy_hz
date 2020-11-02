@@ -23,10 +23,15 @@
   <div class="page-header">
     <h1>我的信息</h1>
   </div>
-  <div class="alert alert-warning" role="alert">商圈助力链接最后几位每天可能会有变化，可以通过退出登录后重新输入助力链接进行更新。</div>
+  <div class="alert alert-warning" role="alert">
+    <p>商圈助力链接最后几位每天可能会有变化，可以通过退出登录后重新输入助力链接进行更新。</p>
+    <p>新支持的助力链接也可以通过退出重登录入。</p>
+  </div>
   <ul class="list-group">
     <li class="list-group-item"><span class="label label-default">我的助力链接</span> {{ help_home_url }}</li>
     <li class="list-group-item"><span class="label label-default">商圈助力链接</span> {{ help_cbd_url }}</li>
+    <li class="list-group-item"><span class="label label-default">时光机助力链接</span> {{ help_tm_url }}</li>
+    <li class="list-group-item"><span class="label label-default">星店长助力链接</span> {{ help_star_url }}</li>
   </ul>
 </div>
 {% endblock container %}

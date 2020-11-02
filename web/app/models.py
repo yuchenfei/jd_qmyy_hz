@@ -8,11 +8,18 @@ class UserExtension(models.Model):
     user = models.OneToOneField(User,
                                 on_delete=models.CASCADE,
                                 related_name='extension')
-    cbd = models.CharField(max_length=100, verbose_name='商圈助力链接')
     help_num = models.IntegerField(default=0, verbose_name='被助力次数')
     be_helped_num = models.IntegerField(default=0, verbose_name='被助力次数')
+    cbd = models.CharField(max_length=100, default='', verbose_name='商圈助力链接')
     cbd_help_num = models.IntegerField(default=0, verbose_name='商圈助力次数')
     cbd_be_helped_num = models.IntegerField(default=0, verbose_name='商圈被助力次数')
+    tm = models.CharField(max_length=100, default='', verbose_name='时光机助力链接')
+    tm_help_num = models.IntegerField(default=0, verbose_name='时光机助力次数')
+    tm_be_helped_num = models.IntegerField(default=0, verbose_name='时光机被助力次数')
+    star = models.CharField(max_length=200, default='', verbose_name='星店长助力链接')
+    star_help_num = models.IntegerField(default=0, verbose_name='星店长助力次数')
+    star_be_helped_num = models.IntegerField(default=0,
+                                             verbose_name='星店长被助力次数')
 
 
 @receiver(post_save, sender=User)

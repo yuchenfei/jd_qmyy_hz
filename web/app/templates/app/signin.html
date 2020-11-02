@@ -10,13 +10,22 @@
     <form class="form-login" action="{% url 'signin' %}" method="post">
         {% csrf_token %}
         <h2 class="form-login-heading">填写链接</h2>
+        <div class="alert alert-info" role="alert">之前已进入过系统，填过助力链接（含商圈、时光机、星店长）且不用更新链接的话，只需填我的助力链接即可。</div>
         <div class="form-group">
-            <label for="homeLink">我的助力链接</label>
+            <label for="homeLink">我的助力链接 <span class="label label-primary">必填</span></label>
             <textarea class="form-control" id="homeLink" name="home_link" required="required" rows="3"></textarea>
         </div>
         <div class="form-group">
-            <label for="cbdLink">我的商圈链接</label>
-            <textarea class="form-control" id="cbdLink" name="cbd_link" required="required" rows="3"></textarea>
+            <label for="cbdLink">我的商圈助力链接 <span class="label label-default">选填</span></label>
+            <textarea class="form-control" id="cbdLink" name="cbd_link" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="tmLink">我的时光机助力链接 <span class="label label-default">选填</span></label>
+            <textarea class="form-control" id="tmLink" name="tm_link" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="starLink">我的星店长助力链接 <span class="label label-default">选填</span></label>
+            <textarea class="form-control" id="starLink" name="star_link" rows="3"></textarea>
         </div>
         {% if messages %}
         {% for message in messages %}
