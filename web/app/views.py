@@ -174,3 +174,61 @@ def help_cbd(request):
     data['url'] = ', '.join(
         [cbd_url + user.extension.cbd for user in user_list])
     return render(request, 'app/help_cbd.html', data)
+
+
+def help_tm(request):
+    if request.POST:
+        id_list = request.POST['id_list'].split(',')
+        src_user = request.user
+        for id in id_list:
+            user = User.objects.get(username=id)
+            user.extension.tm_be_helped_num += 1
+            user.save()
+            log = Log.objects.create(source=src_user, target=user, help_type=2)
+        src_user.extension.tm_help_num += len(id_list)
+        src_user.save()
+        return redirect('home')
+    # 筛选今天登录且进行过时光机助力
+    base_query = User.objects.exclude(
+        Q(extension__tm='') | Q(username=request.user.username))
+    today = datetime.date.today()
+    query = base_query.filter(last_login__contains=today,
+                              extension__tm_help_num__gt=0)
+    if query.count() < 5:
+        query = base_query.all()
+
+    user_list = query.order_by('extension__tm_be_helped_num')[:5]
+    data = {}
+    data['user_list'] = user_list
+    data['id_list'] = ','.join([user.username for user in user_list])
+    data['url'] = ', '.join([tm_url + user.extension.tm for user in user_list])
+    return render(request, 'app/help_tm.html', data)
+
+def help_star(request):
+    if request.POST:
+        id_list = request.POST['id_list'].split(',')
+        src_user = request.user
+        for id in id_list:
+            user = User.objects.get(username=id)
+            user.extension.star_be_helped_num += 1
+            user.save()
+            log = Log.objects.create(source=src_user, target=user, help_type=3)
+        src_user.extension.star_help_num += len(id_list)
+        src_user.save()
+        return redirect('home')
+    # 筛选今天登录且进行过星店长助力
+    base_query = User.objects.exclude(
+        Q(extension__star='') | Q(username=request.user.username))
+    today = datetime.date.today()
+    query = base_query.filter(last_login__contains=today,
+                              extension__star_help_num__gt=0)
+    if query.count() < 5:
+        query = base_query.all()
+
+    user_list = query.order_by('extension__star_be_helped_num')[:5]
+    data = {}
+    data['user_list'] = user_list
+    data['id_list'] = ','.join([user.username for user in user_list])
+    data['url'] = ', '.join(
+        [star_url + user.extension.star for user in user_list])
+    return render(request, 'app/help_star.html', data)
