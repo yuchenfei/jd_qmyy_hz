@@ -131,7 +131,8 @@ def help_home(request):
         src_user.save()
         return redirect('home')
     # 筛选今天登录且进行过助力
-    base_query = User.objects.exclude(username=request.user.username)
+    base_query = User.objects.exclude(
+        Q(is_active=False) | Q(username=request.user.username))
     today = datetime.date.today()
     query = base_query.filter(last_login__contains=today,
                               extension__help_num__gt=0)
@@ -160,7 +161,8 @@ def help_cbd(request):
         return redirect('home')
     # 筛选今天登录且进行过商圈助力
     base_query = User.objects.exclude(
-        Q(extension__cbd='') | Q(username=request.user.username))
+        Q(is_active=False) | Q(extension__cbd='')
+        | Q(username=request.user.username))
     today = datetime.date.today()
     query = base_query.filter(last_login__contains=today,
                               extension__cbd_help_num__gt=0)
@@ -190,7 +192,8 @@ def help_tm(request):
         return redirect('home')
     # 筛选今天登录且进行过时光机助力
     base_query = User.objects.exclude(
-        Q(extension__tm='') | Q(username=request.user.username))
+        Q(is_active=False) | Q(extension__tm='')
+        | Q(username=request.user.username))
     today = datetime.date.today()
     query = base_query.filter(last_login__contains=today,
                               extension__tm_help_num__gt=0)
@@ -203,6 +206,7 @@ def help_tm(request):
     data['id_list'] = ','.join([user.username for user in user_list])
     data['url'] = ', '.join([tm_url + user.extension.tm for user in user_list])
     return render(request, 'app/help_tm.html', data)
+
 
 def help_star(request):
     if request.POST:
@@ -218,7 +222,8 @@ def help_star(request):
         return redirect('home')
     # 筛选今天登录且进行过星店长助力
     base_query = User.objects.exclude(
-        Q(extension__star='') | Q(username=request.user.username))
+        Q(is_active=False) | Q(extension__star='')
+        | Q(username=request.user.username))
     today = datetime.date.today()
     query = base_query.filter(last_login__contains=today,
                               extension__star_help_num__gt=0)
