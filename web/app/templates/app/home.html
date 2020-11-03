@@ -12,8 +12,8 @@
   <div class="row">
     <div class="col-md-3">
       <h2>个人助力</h2>
-      <p class="lead">已助力 {{ user.extension.help_num }} 次</p>
-      <p class="lead">被助力 {{ user.extension.be_helped_num }} 次</p>
+      <p class="lead">已助力 {{ user.extension.home_help_num }} 次</p>
+      <p class="lead">被助力 {{ user.extension.home_be_helped_num }} 次</p>
       <a class="btn btn-primary" href="{% url 'help_home' %}">去助力</a>
     </div>
     {% if help_cbd_url %}

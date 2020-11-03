@@ -8,8 +8,8 @@ class UserExtension(models.Model):
     user = models.OneToOneField(User,
                                 on_delete=models.CASCADE,
                                 related_name='extension')
-    help_num = models.IntegerField(default=0, verbose_name='助力次数')
-    be_helped_num = models.IntegerField(default=0, verbose_name='被助力次数')
+    home_help_num = models.IntegerField(default=0, verbose_name='助力次数')
+    home_be_helped_num = models.IntegerField(default=0, verbose_name='被助力次数')
     cbd = models.CharField(max_length=100,
                            default='',
                            blank=True,
