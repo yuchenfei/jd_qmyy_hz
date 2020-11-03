@@ -16,14 +16,14 @@
       <h2>个人助力</h2>
       <p class="lead">已助力 {{ user.extension.home_help_num }} 次</p>
       <p class="lead">被助力 {{ user.extension.home_be_helped_num }} 次</p>
-      <a class="btn btn-primary" href="{% url 'help_home' %}">去助力</a>
+      <a class="btn btn-primary" href="{% url 'help_home' %}?num={{ num.0 }}">去助力</a>
     </div>
     {% if help_cbd_url %}
     <div class="col-md-3">
       <h2>商圈助力</h2>
       <p class="lead">已助力 {{ user.extension.cbd_help_num }} 次</p>
       <p class="lead">被助力 {{ user.extension.cbd_be_helped_num }} 次</p>
-      <a class="btn btn-primary" href="{% url 'help_cbd' %}">去助力</a>
+      <a class="btn btn-primary" href="{% url 'help_cbd' %}?num={{ num.1 }}">去助力</a>
     </div>
     {% endif %}
     {% if help_tm_url %}
@@ -31,7 +31,7 @@
       <h2>时光机助力</h2>
       <p class="lead">已助力 {{ user.extension.tm_help_num }} 次</p>
       <p class="lead">被助力 {{ user.extension.tm_be_helped_num }} 次</p>
-      <a class="btn btn-primary" href="{% url 'help_tm' %}">去助力</a>
+      <a class="btn btn-primary" href="{% url 'help_tm' %}?num={{ num.2 }}">去助力</a>
     </div>
     {% endif %}
     {% if help_star_url %}
@@ -58,6 +58,9 @@
   </ul>
   <div class="page-header">
     <h1>更新信息</h1>
+  </div>
+  <div class="alert alert-info" role="alert">
+    <p><b>11/4</b> 每日优先显示今日已助力的链接；根据已助力数自动选择助力的链接数。</p>
   </div>
   <div class="alert alert-info" role="alert">
     <p><b>11/3</b> 列表中将不会出现今日已助力的链接，防止每日前几名助力时出现重复链接。</p>

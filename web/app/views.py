@@ -123,6 +123,12 @@ def home(request):
         'tm'] + user.extension.tm if user.extension.tm else ''
     data['help_star_url'] = URL[
         'star'] + user.extension.star if user.extension.star else ''
+    data['num'] = [
+        5 - user.extension.home_help_num,
+        5 - user.extension.cbd_help_num,
+        5 - user.extension.tm_help_num,
+        5 - user.extension.star_help_num,  #星店长每日上限还未知，未应用
+    ]
     return render(request, 'app/home.html', data)
 
 
@@ -159,7 +165,7 @@ def _help(request, type_str):
     # 筛选今天登录且进行过助力
     query = base_query.filter(last_login__contains=today,
                               **{f'extension__{type_str}_help_num__gt': 0})
-    if query.count() < num:
+    if not query.count() > 0:
         query = base_query.all()
 
     user_list = query.order_by(f'extension__{type_str}_be_helped_num')[:num]
