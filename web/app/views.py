@@ -35,10 +35,11 @@ URL = {
 LOG_TYPE = {'home': 0, 'cbd': 1, 'tm': 2, 'star': 3}
 
 
-def _update_info(request, user):
+def _update_info(user, request=None):
     """每日首次登录更新信息"""
     today = datetime.date.today()
     if user.last_login and not user.last_login.date() == today:
+        print('updating...')
         base_query = Log.objects.filter(date_time__contains=today)
         user.extension.home_help_num = base_query.filter(source=user,
                                                          help_type=0).count()
@@ -57,8 +58,9 @@ def _update_info(request, user):
         user.extension.star_be_helped_num = base_query.filter(
             target=user, help_type=3).count()
         user.save()
-        user.backend = 'django.contrib.auth.backends.ModelBackend'
-        login(request, user)
+        if request:
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user)
 
 
 def signin(request):
@@ -96,7 +98,7 @@ def signin(request):
                 if star_id and not star_id == user.extension.star:
                     user.extension.star = star_id
                     user.save()
-                _update_info(request, user)
+                _update_info(user)
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             return redirect('home')
@@ -114,7 +116,7 @@ def home(request):
     user = request.user
     if user.is_anonymous:
         return redirect('signin')
-    _update_info(request, user)
+    _update_info(user, request)
     data = {}
     data['help_home_url'] = URL['home'] + user.username
     data['help_cbd_url'] = URL[
@@ -165,10 +167,18 @@ def _help(request, type_str):
     # 筛选今天登录且进行过助力
     query = base_query.filter(last_login__contains=today,
                               **{f'extension__{type_str}_help_num__gt': 0})
+    update = False
     if not query.count() > 0:
+        update = True
         query = base_query.all()
 
     user_list = query.order_by(f'extension__{type_str}_be_helped_num')[:num]
+    if update:
+        [
+            _update_info(user) for user in user_list
+            if getattr(user.extension, f'{type_str}_help_num') +
+            getattr(user.extension, f'{type_str}_be_helped_num') > 0
+        ]
     data = {}
     data['user_list'] = user_list
     data['id_list'] = ','.join([user.username for user in user_list])
