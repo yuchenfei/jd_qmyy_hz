@@ -143,7 +143,8 @@ def _help(request, type_str):
                 getattr(src_user.extension, attr) + len(id_list))
         src_user.save()
         return redirect('home')
-    
+
+    num = int(request.GET.get('num', 5))
     today = datetime.date.today()
     logs = Log.objects.filter(source=request.user,
                               date_time__contains=today,
@@ -158,10 +159,10 @@ def _help(request, type_str):
     # 筛选今天登录且进行过助力
     query = base_query.filter(last_login__contains=today,
                               **{f'extension__{type_str}_help_num__gt': 0})
-    if query.count() < 5:
+    if query.count() < num:
         query = base_query.all()
 
-    user_list = query.order_by(f'extension__{type_str}_be_helped_num')[:5]
+    user_list = query.order_by(f'extension__{type_str}_be_helped_num')[:num]
     data = {}
     data['user_list'] = user_list
     data['id_list'] = ','.join([user.username for user in user_list])

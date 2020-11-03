@@ -6,6 +6,17 @@
         <h1>个人助力</h1>
     </div>
     <div class="alert alert-warning" role="alert">个人助力有每日上限，为 5 次。</div>
+    <div style="text-align:right; margin-bottom: 9px">
+        <span>只加载 </span>
+        <div class="btn-group" role="group" aria-label="num">
+            {% for i in '12345'|make_list %}
+            <button type="button" class="btn btn-default"
+                onclick="javascrtpt:window.location.href='{% url 'help_home' %}?num={{ i }}'">{{ i }}
+            </button>
+            {% endfor %}
+        </div>
+        <span> 条链接</span>
+    </div>
     <table class="table">
         <thead>
             <tr>
