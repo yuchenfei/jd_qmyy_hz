@@ -39,7 +39,6 @@ def _update_info(user, request=None):
     """每日首次登录更新信息"""
     today = datetime.date.today()
     if user.last_login and not user.last_login.date() == today:
-        print('updating...')
         base_query = Log.objects.filter(date_time__contains=today)
         user.extension.home_help_num = base_query.filter(source=user,
                                                          help_type=0).count()
@@ -153,6 +152,7 @@ def _help(request, type_str):
         return redirect('home')
 
     num = int(request.GET.get('num', 5))
+    num = 0 if num < 0 else num
     today = datetime.date.today()
     logs = Log.objects.filter(source=request.user,
                               date_time__contains=today,
