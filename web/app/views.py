@@ -152,7 +152,9 @@ def _help(request, type_str):
         return redirect('home')
 
     num = int(request.GET.get('num', 5))
+    # check num
     num = 0 if num < 0 else num
+    num = 5 if num > 5 else num
     today = datetime.date.today()
     logs = Log.objects.filter(source=request.user,
                               date_time__contains=today,
