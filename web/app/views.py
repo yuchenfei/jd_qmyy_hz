@@ -143,12 +143,19 @@ def _help(request, type_str):
                 getattr(src_user.extension, attr) + len(id_list))
         src_user.save()
         return redirect('home')
-    # 筛选今天登录且进行过助力
+    
+    today = datetime.date.today()
+    logs = Log.objects.filter(source=request.user,
+                              date_time__contains=today,
+                              help_type=LOG_TYPE[type_str]).all()
+    already_helped_user_list = set([log.target.username for log in logs])
+    # 排除 未激活（被封）、用户自己、今日已助力的
     base_query = User.objects.exclude(
-        Q(is_active=False) | Q(username=request.user.username))
+        Q(is_active=False) | Q(username=request.user.username)
+        | Q(username__in=already_helped_user_list))
     if not type_str == 'home':
         base_query = base_query.exclude(**{f'extension__{type_str}': ''})
-    today = datetime.date.today()
+    # 筛选今天登录且进行过助力
     query = base_query.filter(last_login__contains=today,
                               **{f'extension__{type_str}_help_num__gt': 0})
     if query.count() < 5:

@@ -5,10 +5,12 @@
   <div class="page-header">
     <h1>今日信息</h1>
   </div>
-  <div class="alert alert-danger" role="alert">故意刷高助力数将会被封禁！</div>
-  <div class="alert alert-warning" role="alert">现已支持 <b>时光机助力</b> 和 <b>星店长助力</b>，请点右上角下拉菜单退出，重新登录补全对应链接。
+  <div class="alert alert-danger" role="alert">
+    <p>故意刷高助力数将会被封禁！</p>
   </div>
-  <div class="alert alert-info" role="alert">每日助力他人后才会出现在别人的助力列表里，个人助力和商圈助力数据独立。</div>
+  <div class="alert alert-info" role="alert">
+    <p>每日助力他人后才会出现在别人的助力列表里，各项助力数据独立计算。</p>
+  </div>
   <div class="row">
     <div class="col-md-3">
       <h2>个人助力</h2>
@@ -54,5 +56,14 @@
     <li class="list-group-item"><span class="label label-default">时光机助力链接</span> {{ help_tm_url }}</li>
     <li class="list-group-item"><span class="label label-default">星店长助力链接</span> {{ help_star_url }}</li>
   </ul>
+  <div class="page-header">
+    <h1>更新信息</h1>
+  </div>
+  <div class="alert alert-info" role="alert">
+    <p><b>11/3</b> 列表中将不会出现今日已助力的链接，防止每日前几名助力时出现重复链接。</p>
+  </div>
+  <div class="alert alert-info" role="alert">
+    <p><b>11/2</b> 现已支持 <b>时光机助力</b> 和 <b>星店长助力</b>，请点右上角下拉菜单退出，重新登录补全对应链接。</p>
+  </div>
 </div>
 {% endblock container %}
