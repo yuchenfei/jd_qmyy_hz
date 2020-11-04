@@ -9,57 +9,105 @@
         <p>商圈助力有每日上限，为 5 次。</p>
         <p>商圈活动分两个时间段 09:00 - 20:00 和 20:00 - 22:00 ，推荐在活动时间段里来互相助力商圈。</p>
     </div>
-    <div style="text-align:right; margin-bottom: 9px">
-        <span>只加载 </span>
-        <div class="btn-group" role="group" aria-label="num">
-            {% for i in '12345'|make_list %}
-            <button type="button" class="btn btn-default"
-                onclick="javascrtpt:window.location.href='{% url 'help_cbd' %}?num={{ i }}'">{{ i }}
-            </button>
-            {% endfor %}
+    <div id="info">
+        <div style="text-align:right; margin-bottom: 9px">
+            <span>只加载 </span>
+            <div class="btn-group" role="group" aria-label="num">
+                {% for i in '12345'|make_list %}
+                <button type="button" class="btn btn-default"
+                    onclick="javascrtpt:window.location.href='{% url 'help_cbd' %}?num={{ i }}'">{{ i }}
+                </button>
+                {% endfor %}
+            </div>
+            <span> 条链接</span>
         </div>
-        <span> 条链接</span>
-    </div>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>商圈ID</th>
-                <th>今日商圈助力次数</th>
-                <th>今日商圈被助力次数</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in user_list %}
-            <tr>
-                <td>{{ user.extension.cbd }}</td>
-                <td>{{ user.extension.cbd_help_num }}</td>
-                <td>{{ user.extension.cbd_be_helped_num }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <div style="text-align:right">
-        <button class="btn btn-primary" data-clipboard-text="{{ url }}">复制所有商圈助力链接</button>
-    </div>
-    <form class="form-login" action="{% url 'help_cbd' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="id_list" value="{{ id_list }}">
-        <div class="checkbox">
-            <label>
-                <input type="checkbox" required="required">我确认已经完成助力了
-            </label>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>商圈ID</th>
+                    <th>今日商圈助力次数</th>
+                    <th>今日商圈被助力次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in user_list %}
+                <tr>
+                    <td>{{ user.extension.cbd }}</td>
+                    <td>{{ user.extension.cbd_help_num }}</td>
+                    <td>{{ user.extension.cbd_be_helped_num }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="text-align:right">
+            <button class="btn btn-primary" data-clipboard-text="{{ url }}">复制所有商圈助力链接</button>
         </div>
-        <button type="submit" class="btn btn-lg btn-primary btn-block" type="submit">完成</button>
-    </form>
+    </div>
+    {% csrf_token %}
+    <input type="hidden" name="id_list" value="{{ id_list }}">
+    <div class="form-group">
+        <label for="report">执行结果</label>
+        <textarea class="form-control" id="report" name="report" required="True" rows="5"></textarea>
+    </div>
+    <div style="margin-top: 9px" id="example">
+        <label for="result">示例（结果的条数应与助力链接的数量一致，不能含有除商圈助力之外的结果信息）</label>
+        <div>
+            <img src="http://markdown.flyingspace.cn/example.png" title="示例">
+        </div>
+    </div>
+    <div class="alert alert-danger hide" id="error" role="alert"></div>
+    <div class="alert alert-info hide" id="message" role="alert"></div>
+    <button class="btn btn-lg btn-primary btn-block" id="submit">完成</button>
+    <a class="btn btn-lg btn-primary btn-block hide" id="home" href="{% url 'home' %}">返回首页</a>
 </div>
+{% endblock container %}
 
+{% block script %}
 {% load static %}
 <script src="{% static 'app/clipboard.min.js' %}"></script>
 <script>
-    var clipboard = new ClipboardJS('.btn');
-    clipboard.on('success', function (e) {
-        alert('已复制到粘贴板')
-        e.clearSelection();
-    });
+    $(document).ready(function () {
+        var clipboard = new ClipboardJS('.btn')
+        clipboard.on('success', function (e) {
+            alert('已复制到粘贴板')
+            e.clearSelection()
+        })
+
+        $("#submit").click(function () {
+            var report = $('#report').val()
+            if (report) {
+                $("#error").addClass('hide')
+                $.ajax({
+                    url: "{% url 'help_cbd' %}",
+                    type: 'post',
+                    headers: {
+                        'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val()
+                    },
+                    data: {
+                        id_list: $('input[name=id_list]').val(),
+                        report: $('#report').val()
+                    },
+                    success: function (response) {
+                        console.log(response)
+                        if (response.status === 'success') {
+                            $("#info").addClass('hide')
+                            $("#example").addClass('hide')
+                            $("#submit").addClass('hide')
+                            $("#message").html(response.message)
+                            $("#message").removeClass('hide')
+                            $("#home").removeClass('hide')
+                        }
+                        if (response.status === 'error') {
+                            $("#error").html(response.message)
+                            $("#error").removeClass('hide')
+                        }
+                    }
+                })
+            } else {
+                $("#error").html('请填写执行结果')
+                $("#error").removeClass('hide')
+            }
+        })
+    })
 </script>
-{% endblock container %}
+{% endblock script %}

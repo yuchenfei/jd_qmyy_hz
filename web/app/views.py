@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User, AnonymousUser
 from django.db.models import Q
+from django.http import JsonResponse
 
 from .models import Log
 
@@ -21,6 +22,8 @@ tm_pattern = re.compile(
 star_pattern = re.compile(
     r'https:\/\/h5\.m\.jd\.com\/babelDiy\/Zeus\/4DEZi5iUgrNLD9EWknrGZhCjNv7V\/index\.html\?(.+)'
 )
+report_cbd_pattern = re.compile(
+    r'(\d\d:\d\d:\d\d) \[帮助商圈助力\](....)！.+\((\d)\/\d\)')
 
 URL = {
     'home':
@@ -136,7 +139,45 @@ def home(request):
 def _help(request, type_str):
     if request.POST:
         id_list = request.POST['id_list'].split(',')
+        report = request.POST.get('report', '')
         src_user = request.user
+        if report:  # CBD 校验是否成功
+            data = [{'id': id_} for id_ in id_list]
+            report_list = report.strip().split('\n')
+            if not len(data) == len(report_list):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '结果解析异常，请检查结果是否复制正确'
+                })
+            success = 0
+            for line in report.strip().split('\n'):
+                match = re.match(report_cbd_pattern, line.strip())
+                if match:
+                    time = match.group(1)
+                    result = match.group(2)
+                    index = int(match.group(3))
+                    data[index - 1].update({'time': time, 'result': result})
+                else:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': '结果解析异常，请检查结果是否复制正确'
+                    })
+            for item in data:
+                user = User.objects.get(username=item['id'])
+                if item['result'] == '助力成功':
+                    success += 1
+                    user.extension.cbd_be_helped_num += 1
+                    user.save()
+                    log = Log.objects.create(source=src_user,
+                                             target=user,
+                                             help_type=LOG_TYPE[type_str])
+                elif item['result'] == '操作成功':
+                    user.extension.cbd = ''
+                    user.save()
+            return JsonResponse({
+                'status': 'success',
+                'message': f'助力成功 {success} 次'
+            })
         for id in id_list:
             user = User.objects.get(username=id)
             attr = f'{type_str}_be_helped_num'
@@ -150,7 +191,7 @@ def _help(request, type_str):
                 getattr(src_user.extension, attr) + len(id_list))
         src_user.save()
         return redirect('home')
-
+    # GET METHOD
     num = int(request.GET.get('num', 5))
     # check num
     num = 0 if num < 0 else num
