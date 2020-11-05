@@ -41,26 +41,26 @@ LOG_TYPE = {'home': 0, 'cbd': 1, 'tm': 2, 'star': 3}
 def _update_info(user, request=None):
     """每日首次登录更新信息"""
     today = datetime.date.today()
-    if user.last_login and not user.last_login.date() == today:
-        base_query = Log.objects.filter(date_time__contains=today)
-        user.extension.home_help_num = base_query.filter(source=user,
-                                                         help_type=0).count()
-        user.extension.home_be_helped_num = base_query.filter(
-            target=user, help_type=0).count()
-        user.extension.cbd_help_num = base_query.filter(source=user,
-                                                        help_type=1).count()
-        user.extension.cbd_be_helped_num = base_query.filter(
-            target=user, help_type=1).count()
-        user.extension.tm_help_num = base_query.filter(source=user,
-                                                       help_type=2).count()
-        user.extension.tm_be_helped_num = base_query.filter(
-            target=user, help_type=2).count()
-        user.extension.star_help_num = base_query.filter(source=user,
-                                                         help_type=3).count()
-        user.extension.star_be_helped_num = base_query.filter(
-            target=user, help_type=3).count()
-        user.save()
-        if request:
+    base_query = Log.objects.filter(date_time__contains=today)
+    user.extension.home_help_num = base_query.filter(source=user,
+                                                     help_type=0).count()
+    user.extension.home_be_helped_num = base_query.filter(target=user,
+                                                          help_type=0).count()
+    user.extension.cbd_help_num = base_query.filter(source=user,
+                                                    help_type=1).count()
+    user.extension.cbd_be_helped_num = base_query.filter(target=user,
+                                                         help_type=1).count()
+    user.extension.tm_help_num = base_query.filter(source=user,
+                                                   help_type=2).count()
+    user.extension.tm_be_helped_num = base_query.filter(target=user,
+                                                        help_type=2).count()
+    user.extension.star_help_num = base_query.filter(source=user,
+                                                     help_type=3).count()
+    user.extension.star_be_helped_num = base_query.filter(target=user,
+                                                          help_type=3).count()
+    user.save()
+    if request:
+        if user.last_login and not user.last_login.date() == today:
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
 
@@ -149,7 +149,6 @@ def _help(request, type_str):
                     'status': 'error',
                     'message': '结果解析异常，请检查结果是否复制正确'
                 })
-            success = 0
             for line in report.strip().split('\n'):
                 match = re.match(report_cbd_pattern, line.strip())
                 if match:
@@ -162,6 +161,7 @@ def _help(request, type_str):
                         'status': 'error',
                         'message': '结果解析异常，请检查结果是否复制正确'
                     })
+            success = 0
             for item in data:
                 user = User.objects.get(username=item['id'])
                 if item['result'] == '助力成功':
@@ -174,6 +174,8 @@ def _help(request, type_str):
                 elif item['result'] == '操作成功':
                     user.extension.cbd = ''
                     user.save()
+            src_user.extension.home_help_num += success
+            src_user.save()
             return JsonResponse({
                 'status': 'success',
                 'message': f'助力成功 {success} 次'
