@@ -39,25 +39,25 @@ LOG_TYPE = {'home': 0, 'cbd': 1, 'tm': 2, 'star': 3}
 
 
 def _update_info(user, request=None):
-    """每日首次登录更新信息"""
+    """更新信息，并按需刷新登录时间"""
     today = datetime.date.today()
     base_query = Log.objects.filter(date_time__contains=today)
-    user.extension.home_help_num = base_query.filter(source=user,
-                                                     help_type=0).count()
-    user.extension.home_be_helped_num = base_query.filter(target=user,
-                                                          help_type=0).count()
-    user.extension.cbd_help_num = base_query.filter(source=user,
-                                                    help_type=1).count()
-    user.extension.cbd_be_helped_num = base_query.filter(target=user,
-                                                         help_type=1).count()
-    user.extension.tm_help_num = base_query.filter(source=user,
-                                                   help_type=2).count()
-    user.extension.tm_be_helped_num = base_query.filter(target=user,
-                                                        help_type=2).count()
-    user.extension.star_help_num = base_query.filter(source=user,
-                                                     help_type=3).count()
-    user.extension.star_be_helped_num = base_query.filter(target=user,
-                                                          help_type=3).count()
+    user.extension.home_help_num = \
+        base_query.filter(source=user, help_type=0).count()
+    user.extension.home_be_helped_num = \
+        base_query.filter(target=user, help_type=0).count()
+    user.extension.cbd_help_num = \
+        base_query.filter(source=user, help_type=1).count()
+    user.extension.cbd_be_helped_num = \
+        base_query.filter(target=user, help_type=1).count()
+    user.extension.tm_help_num = \
+        base_query.filter(source=user, help_type=2).count()
+    user.extension.tm_be_helped_num = \
+        base_query.filter(target=user, help_type=2).count()
+    user.extension.star_help_num = \
+        base_query.filter(source=user, help_type=3).count()
+    user.extension.star_be_helped_num = \
+        base_query.filter(target=user, help_type=3).count()
     user.save()
     if request:
         if user.last_login and not user.last_login.date() == today:
@@ -66,6 +66,7 @@ def _update_info(user, request=None):
 
 
 def signin(request):
+    """录入信息"""
     if request.POST:
         home_link = request.POST['home_link']
         cbd_link = request.POST['cbd_link']
@@ -87,7 +88,6 @@ def signin(request):
                 user.extension.tm = tm_id
                 user.extension.star = star_id
                 user.save()
-                # 无密码登录
             else:  # 已加入用户
                 user = query[0]
                 #  更新链接信息
@@ -100,119 +100,74 @@ def signin(request):
                 if star_id and not star_id == user.extension.star:
                     user.extension.star = star_id
                     user.save()
-                _update_info(user)
+                _update_info(user)  # 仅刷新首页数据
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             return redirect('home')
         else:
-            messages.warning(request, '助力链接或商圈链接格式不正确，请检查后重试')
+            messages.warning(request, '助力链接格式不正确，请检查后重试')
     return render(request, 'app/signin.html')
 
 
 def signout(request):
+    """退出"""
     logout(request)
     return redirect('signin')
 
 
 def home(request):
+    """首页视图"""
     user = request.user
     if user.is_anonymous:
         return redirect('signin')
-    _update_info(user, request)
+    _update_info(user, request)  # 更新数据，并刷新登录时间
     data = {}
     data['help_home_url'] = URL['home'] + user.username
-    data['help_cbd_url'] = URL[
-        'cbd'] + user.extension.cbd if user.extension.cbd else ''
-    data['help_tm_url'] = URL[
-        'tm'] + user.extension.tm if user.extension.tm else ''
-    data['help_star_url'] = URL[
-        'star'] + user.extension.star if user.extension.star else ''
+    data['help_cbd_url'] = URL['cbd'] + \
+        user.extension.cbd if user.extension.cbd else ''
+    data['help_tm_url'] = URL['tm'] + \
+        user.extension.tm if user.extension.tm else ''
+    data['help_star_url'] = URL['star'] + \
+        user.extension.star if user.extension.star else ''
     data['num'] = [
         5 - user.extension.home_help_num,
         5 - user.extension.cbd_help_num,
         5 - user.extension.tm_help_num,
-        5 - user.extension.star_help_num,  #星店长每日上限还未知，未应用
+        5 - user.extension.star_help_num,
     ]
     return render(request, 'app/home.html', data)
 
 
+def help_home(request):
+    """个人助力"""
+    return _help(request, 'home')
+
+
+def help_cbd(request):
+    """商圈助力"""
+    return _help(request, 'cbd')
+
+
+def help_tm(request):
+    """时光机助力"""
+    return _help(request, 'tm')
+
+
+def help_star(request):
+    """星店长助力"""
+    return _help(request, 'star')
+
+
 def _help(request, type_str):
-    if request.POST:
-        id_list = request.POST['id_list'].split(',')
-        report = request.POST.get('report', '')
-        src_user = request.user
-        if report and type_str == 'cbd':  # CBD 校验结果
-            data = [{'id': id_} for id_ in id_list]
-            report_list = report.strip().split('\n')
-            if not len(data) == len(report_list):
-                return JsonResponse({
-                    'status': 'error',
-                    'message': '结果解析异常，请检查结果是否复制正确'
-                })
-            for line in report.strip().split('\n'):
-                match = re.match(report_cbd_pattern, line.strip())
-                if match:
-                    time = match.group(1)
-                    result = match.group(2)
-                    info = match.group(3)
-                    index = int(match.group(4))
-                    data[index - 1].update({
-                        'time': time,
-                        'result': result,
-                        'info': info
-                    })
-                else:
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': '结果解析异常，请检查结果是否复制正确'
-                    })
-            success = 0
-            for item in data:
-                user = User.objects.get(username=item['id'])
-                if item['result'] == '助力成功':
-                    success += 1
-                    user.extension.cbd_be_helped_num += 1
-                    user.save()
-                    log = Log.objects.create(source=src_user,
-                                             target=user,
-                                             help_type=LOG_TYPE[type_str])
-                elif item['result'] == '操作成功':
-                    if item['info'].startswith('谢谢你！本场挑战已结束'):
-                        return JsonResponse({
-                            'status': 'error',
-                            'message': '本场挑战已结束'
-                        })
-                    elif item['info'].startswith('您今天已经帮过') or \
-                    item['info'].startswith('好友人气爆棚'):
-                        # 今日忽略该 ID
-                        log = Log.objects.create(
-                            source=src_user,
-                            target=user,
-                            help_type=(LOG_TYPE[type_str] + 4))
-                    elif item['info'].startswith('挑战已结束'):
-                        # 链接过时
-                        user.extension.cbd = ''
-                        user.save()
-            src_user.extension.home_help_num += success
-            src_user.save()
-            return JsonResponse({
-                'status': 'success',
-                'message': f'助力成功 {success} 次'
-            })
-        for id in id_list:
-            user = User.objects.get(username=id)
-            attr = f'{type_str}_be_helped_num'
-            setattr(user.extension, attr, getattr(user.extension, attr) + 1)
-            user.save()
-            log = Log.objects.create(source=src_user,
-                                     target=user,
-                                     help_type=LOG_TYPE[type_str])
-        attr = f'{type_str}_help_num'
-        setattr(src_user.extension, attr,
-                getattr(src_user.extension, attr) + len(id_list))
-        src_user.save()
-        return redirect('home')
-    # GET METHOD
+    """助力处理入口"""
+    if request.GET:
+        return _handle_help_get_request(request, type_str)
+    elif request.POST:
+        return _handle_help_post_request(request, type_str)
+
+
+def _handle_help_get_request(request, type_str):
+    """处理助力页面 GET 请求"""
     num = int(request.GET.get('num', 5))
     # check num
     num = 0 if num < 0 else num
@@ -258,17 +213,84 @@ def _help(request, type_str):
     return render(request, f'app/help_{type_str}.html', data)
 
 
-def help_home(request):
-    return _help(request, 'home')
-
-
-def help_cbd(request):
-    return _help(request, 'cbd')
-
-
-def help_tm(request):
-    return _help(request, 'tm')
-
-
-def help_star(request):
-    return _help(request, 'star')
+def _handle_help_post_request(request, type_str):
+    """处理助力页面 POST 请求"""
+    id_list = request.POST['id_list'].split(',')
+    report = request.POST.get('report', '')
+    src_user = request.user
+    # 商圈助力反馈
+    if report and type_str == 'cbd':
+        # 组合链接和对应反馈
+        data = [{'id': id_} for id_ in id_list]
+        report_list = report.strip().split('\n')
+        if not len(data) == len(report_list):
+            return JsonResponse({
+                'status': 'error',
+                'message': '反馈结束数量与链接数不一致'
+            })
+        # 解析反馈信息
+        for line in report.strip().split('\n'):
+            match = re.match(report_cbd_pattern, line.strip())
+            if match:
+                time = match.group(1)
+                result = match.group(2)
+                info = match.group(3)
+                index = int(match.group(4))
+                data[index - 1].update({
+                    'time': time,
+                    'result': result,
+                    'info': info
+                })
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '结果解析异常，请检查结果是否复制正确'
+                })
+        # 根据反馈情况处理链接
+        success = 0
+        for item in data:
+            user = User.objects.get(username=item['id'])
+            if item['result'] == '助力成功':
+                success += 1
+                user.extension.cbd_be_helped_num += 1
+                user.save()
+                log = Log.objects.create(source=src_user,
+                                         target=user,
+                                         help_type=LOG_TYPE[type_str])
+            elif item['result'] == '操作成功':
+                if item['info'].startswith('谢谢你！本场挑战已结束'):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': '本场挑战已结束'
+                    })
+                elif item['info'].startswith('您今天已经帮过') or \
+                    item['info'].startswith('好友人气爆棚'):
+                    # 今日忽略该 ID
+                    log = Log.objects.create(source=src_user,
+                                             target=user,
+                                             help_type=(LOG_TYPE[type_str] +
+                                                        4))
+                elif item['info'].startswith('挑战已结束'):
+                    # 链接过时
+                    user.extension.cbd = ''
+                    user.save()
+        src_user.extension.home_help_num += success
+        src_user.save()
+        return JsonResponse({
+            'status': 'success',
+            'message': f'助力成功 {success} 次'
+        })
+    # 默认所有链接助力成功
+    for id in id_list:
+        user = User.objects.get(username=id)
+        attr = f'{type_str}_be_helped_num'
+        setattr(user.extension, attr, getattr(user.extension, attr) + 1)
+        user.save()
+        log = Log.objects.create(source=src_user,
+                                 target=user,
+                                 help_type=LOG_TYPE[type_str])
+    attr = f'{type_str}_help_num'
+    setattr(src_user.extension, attr,
+            getattr(src_user.extension, attr) + len(id_list))
+    src_user.save()
+    return redirect('home')
