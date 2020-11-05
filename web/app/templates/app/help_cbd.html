@@ -44,7 +44,8 @@
         </div>
     </div>
     {% csrf_token %}
-    <input type="hidden" name="id_list" value="{{ id_list }}">
+    <input type="hidden" id="url" value="{% url 'help_cbd' %}">
+    <input type="hidden" id="id_list" value="{{ id_list }}">
     <div class="form-group">
         <label for="report">执行结果</label>
         <textarea class="form-control" id="report" name="report" required="True" rows="5"></textarea>
@@ -55,59 +56,14 @@
             <img src="http://markdown.flyingspace.cn/example.png" title="示例">
         </div>
     </div>
-    <div class="alert alert-danger hide" id="error" role="alert"></div>
-    <div class="alert alert-info hide" id="message" role="alert"></div>
+    <div class="alert alert-danger hide" id="alert" role="alert"></div>
     <button class="btn btn-lg btn-primary btn-block" id="submit">完成</button>
     <a class="btn btn-lg btn-primary btn-block hide" id="home" href="{% url 'home' %}">返回首页</a>
 </div>
 {% endblock container %}
 
-{% block script %}
 {% load static %}
+{% block script %}
 <script src="{% static 'app/clipboard.min.js' %}"></script>
-<script>
-    $(document).ready(function () {
-        var clipboard = new ClipboardJS('.btn')
-        clipboard.on('success', function (e) {
-            alert('已复制到粘贴板')
-            e.clearSelection()
-        })
-
-        $("#submit").click(function () {
-            var report = $('#report').val()
-            if (report) {
-                $("#error").addClass('hide')
-                $.ajax({
-                    url: "{% url 'help_cbd' %}",
-                    type: 'post',
-                    headers: {
-                        'X-CSRFToken': $('input[name=csrfmiddlewaretoken]').val()
-                    },
-                    data: {
-                        id_list: $('input[name=id_list]').val(),
-                        report: $('#report').val()
-                    },
-                    success: function (response) {
-                        console.log(response)
-                        if (response.status === 'success') {
-                            $("#info").addClass('hide')
-                            $("#example").addClass('hide')
-                            $("#submit").addClass('hide')
-                            $("#message").html(response.message)
-                            $("#message").removeClass('hide')
-                            $("#home").removeClass('hide')
-                        }
-                        if (response.status === 'error') {
-                            $("#error").html(response.message)
-                            $("#error").removeClass('hide')
-                        }
-                    }
-                })
-            } else {
-                $("#error").html('请填写执行结果')
-                $("#error").removeClass('hide')
-            }
-        })
-    })
-</script>
+<script src="{% static 'app/help.js' %}"></script>
 {% endblock script %}

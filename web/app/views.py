@@ -235,8 +235,14 @@ def _handle_help_post_request(request, type_str):
                 time = match.group(1)
                 result = match.group(2)
                 info = match.group(3)
-                index = int(match.group(4))
-                data[index - 1].update({
+                index = int(match.group(4)) - 1
+                print(index, range(len(data)))
+                if index not in range(len(data)):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': '执行结果索引与链接数量不匹配，请检查结果是否复制正确'
+                    })
+                data[index].update({
                     'time': time,
                     'result': result,
                     'info': info
@@ -244,7 +250,7 @@ def _handle_help_post_request(request, type_str):
             else:
                 return JsonResponse({
                     'status': 'error',
-                    'message': '结果解析异常，请检查结果是否复制正确'
+                    'message': '执行结果解析异常，请检查结果是否复制正确'
                 })
         # 根据反馈情况处理链接
         success = 0
