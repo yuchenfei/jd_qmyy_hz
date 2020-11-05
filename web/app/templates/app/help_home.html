@@ -6,57 +6,61 @@
         <h1>个人助力</h1>
     </div>
     <div class="alert alert-warning" role="alert">个人助力有每日上限，为 5 次。</div>
-    <div style="text-align:right; margin-bottom: 9px">
-        <span>只加载 </span>
-        <div class="btn-group" role="group" aria-label="num">
-            {% for i in '12345'|make_list %}
-            <button type="button" class="btn btn-default"
-                onclick="javascrtpt:window.location.href='{% url 'help_home' %}?num={{ i }}'">{{ i }}
-            </button>
-            {% endfor %}
+    <div id="info">
+        <div style="text-align:right; margin-bottom: 9px">
+            <span>只加载 </span>
+            <div class="btn-group" role="group" aria-label="num">
+                {% for i in '12345'|make_list %}
+                <button type="button" class="btn btn-default"
+                    onclick="javascrtpt:window.location.href='{% url 'help_home' %}?num={{ i }}'">{{ i }}
+                </button>
+                {% endfor %}
+            </div>
+            <span> 条链接</span>
         </div>
-        <span> 条链接</span>
-    </div>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>今日助力次数</th>
-                <th>今日被助力次数</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in user_list %}
-            <tr>
-                <td>{{ user.username }}</td>
-                <td>{{ user.extension.home_help_num }}</td>
-                <td>{{ user.extension.home_be_helped_num }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <div style="text-align:right">
-        <button class="btn btn-primary" data-clipboard-text="{{ url }}">复制所有助力链接</button>
-    </div>
-    <form class="form-login" action="{% url 'help_home' %}" method="post">
-        {% csrf_token %}
-        <input type="hidden" name="id_list" value="{{ id_list }}">
-        <div class="checkbox">
-            <label>
-                <input type="checkbox" required="required">我确认已经完成助力了
-            </label>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>今日助力次数</th>
+                    <th>今日被助力次数</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in user_list %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.extension.home_help_num }}</td>
+                    <td>{{ user.extension.home_be_helped_num }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div style="text-align:right">
+            <button class="btn btn-primary" data-clipboard-text="{{ url }}">复制所有助力链接</button>
         </div>
-        <button type="submit" class="btn btn-lg btn-primary btn-block" type="submit">完成</button>
-    </form>
+    </div>
+    {% csrf_token %}
+    <input type="hidden" id="url" value="{% url 'help_home' %}">
+    <input type="hidden" id="id_list" value="{{ id_list }}">
+    <div class="form-group">
+        <label for="report">执行结果</label>
+        <textarea class="form-control" id="report" name="report" required="True" rows="5"></textarea>
+    </div>
+    <div style="margin: 10px 0" id="example">
+        <label for="result">示例（请直接从软件内复制，结果的条数应与助力链接的数量一致，不能含有除个人助力之外的结果信息）</label>
+        <div>
+            <img src="http://markdown.flyingspace.cn/example_help_home.png" title="示例">
+        </div>
+    </div>
+    <div class="alert alert-danger hide" id="alert" role="alert"></div>
+    <button class="btn btn-lg btn-primary btn-block" id="submit">完成</button>
+    <a class="btn btn-lg btn-primary btn-block hide" id="home" href="{% url 'home' %}">返回首页</a>
 </div>
+{% endblock container %}
 
 {% load static %}
+{% block script %}
 <script src="{% static 'app/clipboard.min.js' %}"></script>
-<script>
-    var clipboard = new ClipboardJS('.btn');
-    clipboard.on('success', function (e) {
-        alert('已复制到粘贴板')
-        e.clearSelection();
-    });
-</script>
-{% endblock container %}
+<script src="{% static 'app/help.js' %}"></script>
+{% endblock script %}
