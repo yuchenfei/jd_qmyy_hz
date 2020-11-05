@@ -23,7 +23,7 @@ star_pattern = re.compile(
     r'https:\/\/h5\.m\.jd\.com\/babelDiy\/Zeus\/4DEZi5iUgrNLD9EWknrGZhCjNv7V\/index\.html\?(.+)'
 )
 report_cbd_pattern = re.compile(
-    r'(\d\d:\d\d:\d\d) \[帮助商圈助力\](....)！.+\((\d)\/\d\)')
+    r'(\d\d:\d\d:\d\d) \[帮助商圈助力\](....)！(.+)\((\d)\/\d\)')
 
 URL = {
     'home':
@@ -154,8 +154,13 @@ def _help(request, type_str):
                 if match:
                     time = match.group(1)
                     result = match.group(2)
-                    index = int(match.group(3))
-                    data[index - 1].update({'time': time, 'result': result})
+                    info = match.group(3)
+                    index = int(match.group(4))
+                    data[index - 1].update({
+                        'time': time,
+                        'result': result,
+                        'info': info
+                    })
                 else:
                     return JsonResponse({
                         'status': 'error',
@@ -172,8 +177,9 @@ def _help(request, type_str):
                                              target=user,
                                              help_type=LOG_TYPE[type_str])
                 elif item['result'] == '操作成功':
-                    user.extension.cbd = ''
-                    user.save()
+                    if item['info'].startswith('挑战已结束'):
+                        user.extension.cbd = ''
+                        user.save()
             src_user.extension.home_help_num += success
             src_user.save()
             return JsonResponse({
