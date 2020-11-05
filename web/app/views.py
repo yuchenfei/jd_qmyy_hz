@@ -141,7 +141,7 @@ def _help(request, type_str):
         id_list = request.POST['id_list'].split(',')
         report = request.POST.get('report', '')
         src_user = request.user
-        if report:  # CBD 校验是否成功
+        if report and type_str == 'cbd':  # CBD 校验结果
             data = [{'id': id_} for id_ in id_list]
             report_list = report.strip().split('\n')
             if not len(data) == len(report_list):
@@ -177,7 +177,20 @@ def _help(request, type_str):
                                              target=user,
                                              help_type=LOG_TYPE[type_str])
                 elif item['result'] == '操作成功':
-                    if item['info'].startswith('挑战已结束'):
+                    if item['info'].startswith('谢谢你！本场挑战已结束'):
+                        return JsonResponse({
+                            'status': 'error',
+                            'message': '本场挑战已结束'
+                        })
+                    elif item['info'].startswith('您今天已经帮过') or \
+                    item['info'].startswith('好友人气爆棚'):
+                        # 今日忽略该 ID
+                        log = Log.objects.create(
+                            source=src_user,
+                            target=user,
+                            help_type=(LOG_TYPE[type_str] + 4))
+                    elif item['info'].startswith('挑战已结束'):
+                        # 链接过时
                         user.extension.cbd = ''
                         user.save()
             src_user.extension.home_help_num += success
@@ -205,11 +218,12 @@ def _help(request, type_str):
     num = 0 if num < 0 else num
     num = 5 if num > 5 else num
     today = datetime.date.today()
-    logs = Log.objects.filter(source=request.user,
-                              date_time__contains=today,
-                              help_type=LOG_TYPE[type_str]).all()
+    logs = Log.objects.filter(Q(help_type=LOG_TYPE[type_str])
+                              | Q(help_type=LOG_TYPE[type_str] + 4),
+                              source=request.user,
+                              date_time__contains=today).all()
     already_helped_user_list = set([log.target.username for log in logs])
-    # 排除 未激活（被封）、用户自己、今日已助力的
+    # 排除 未激活（被封）、用户自己、今日已助力过的、忽略的
     base_query = User.objects.exclude(
         Q(is_active=False) | Q(username=request.user.username)
         | Q(username__in=already_helped_user_list))
