@@ -34,6 +34,10 @@ PATTERN = {
     'tm': {
         'report':
         re.compile(r'(\d\d:\d\d:\d\d) \[时光机助力\](....)！(.*)\((\d+)\/\d\)')
+    },
+    'star': {
+        'report':
+        re.compile(r'(\d\d:\d\d:\d\d) \[星店长助力\](....)！(.*)\((\d+)\/\d\)')
     }
 }
 
@@ -231,94 +235,63 @@ def _handle_help_get_request(request, type_str):
 
 def _handle_help_post_request(request, type_str):
     """处理助力页面 POST 请求"""
+    src_user = request.user
     id_list = request.POST['id_list'].split(',')
     report = request.POST.get('report', '')
-    src_user = request.user
-    if report:
-        data = [{'id': id_} for id_ in id_list]  # 用于组合链接和对应反馈
-        report_list = report.strip().split('\n')
-        if not len(data) == len(report_list):
+    data = [{'id': id_} for id_ in id_list]  # 用于组合链接和对应反馈
+    report_list = report.strip().split('\n')
+    if not len(data) == len(report_list):
+        return JsonResponse({'status': 'error', 'message': '反馈结束数量与链接数不一致'})
+    # 解析反馈信息
+    for i, line in enumerate(report.strip().split('\n')):
+        match = re.match(PATTERN[type_str]['report'], line.strip())
+        if match:
+            time = match.group(1)
+            result = match.group(2)
+            info = match.group(3)
+            if type_str == 'tm':  # 时光机索引会出现 (23206264/1)
+                index = len(data) - 1 - i
+            else:
+                index = int(match.group(4)) - 1
+            print(index, range(len(data)))
+            if index not in range(len(data)):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': '执行结果索引与链接数量不匹配，请检查结果是否复制正确'
+                })
+            data[index].update({'time': time, 'result': result, 'info': info})
+        else:
             return JsonResponse({
                 'status': 'error',
-                'message': '反馈结束数量与链接数不一致'
+                'message': '执行结果解析异常，请检查结果是否复制正确'
             })
-        if type_str in ['cbd', 'home', 'tm']:
-            # 解析反馈信息
-            for i, line in enumerate(report.strip().split('\n')):
-                match = re.match(PATTERN[type_str]['report'], line.strip())
-                if match:
-                    time = match.group(1)
-                    result = match.group(2)
-                    info = match.group(3)
-                    if type_str == 'tm':  # 时光机索引会出现 (23206264/1)
-                        index = len(data) - 1 - i
-                    else:
-                        index = int(match.group(4)) - 1
-                    print(index, range(len(data)))
-                    if index not in range(len(data)):
-                        return JsonResponse({
-                            'status':
-                            'error',
-                            'message':
-                            '执行结果索引与链接数量不匹配，请检查结果是否复制正确'
-                        })
-                    data[index].update({
-                        'time': time,
-                        'result': result,
-                        'info': info
-                    })
-                else:
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': '执行结果解析异常，请检查结果是否复制正确'
-                    })
-            # 根据反馈情况处理链接
-            success = 0
-            for item in data:
-                user = User.objects.get(username=item['id'])
-                if item['result'] == '助力成功':
-                    success += 1
-                    attr = f'{type_str}_be_helped_num'
-                    setattr(user.extension, attr,
-                            getattr(user.extension, attr) + 1)
-                    user.save()
-                    Log.objects.create(source=src_user,
-                                       target=user,
-                                       help_type=LOG_TYPE[type_str])
-                elif item['result'] == '操作成功':
-                    if item['info'].startswith('谢谢你！本场挑战已结束'):
-                        return JsonResponse({
-                            'status': 'error',
-                            'message': '本场挑战已结束'
-                        })
-                    elif item['info'].startswith('您今天已经帮') \
-                        or item['info'].startswith('好友人气爆棚') \
-                            or item['info'].startswith('已为此人助力过'):
-                        # 今日忽略该 ID
-                        Log.objects.create(source=src_user,
-                                           target=user,
-                                           help_type=(LOG_TYPE[type_str] + 4))
-                    elif item['info'].startswith('挑战已结束'):
-                        # 链接过时
-                        user.extension.cbd = ''
-                        user.save()
-            src_user.extension.home_help_num += success
-            src_user.save()
-            return JsonResponse({
-                'status': 'success',
-                'message': f'助力成功 {success} 次'
-            })
-    # 默认所有链接助力成功
-    for id in id_list:
-        user = User.objects.get(username=id)
-        attr = f'{type_str}_be_helped_num'
-        setattr(user.extension, attr, getattr(user.extension, attr) + 1)
-        user.save()
-        Log.objects.create(source=src_user,
-                           target=user,
-                           help_type=LOG_TYPE[type_str])
-    attr = f'{type_str}_help_num'
-    setattr(src_user.extension, attr,
-            getattr(src_user.extension, attr) + len(id_list))
+    # 根据反馈情况处理链接
+    success = 0
+    for item in data:
+        user = User.objects.get(username=item['id'])
+        if item['result'] == '助力成功':
+            success += 1
+            attr = f'{type_str}_be_helped_num'
+            setattr(user.extension, attr, getattr(user.extension, attr) + 1)
+            user.save()
+            Log.objects.create(source=src_user,
+                               target=user,
+                               help_type=LOG_TYPE[type_str])
+        elif item['result'] == '操作成功':
+            if item['info'].startswith('谢谢你！本场挑战已结束'):
+                return JsonResponse({'status': 'error', 'message': '本场挑战已结束'})
+            elif item['info'].startswith('您今天已经帮') \
+                or item['info'].startswith('好友人气爆棚') \
+                    or item['info'].startswith('已为此人助力过'):
+                # 今日忽略该 ID
+                Log.objects.create(source=src_user,
+                                   target=user,
+                                   help_type=(LOG_TYPE[type_str] + 4))
+            elif item['info'].startswith('挑战已结束') \
+                    or item['info'].startswith('请求失败，请求参数错误'):
+                # 商圈链接过时 星店长链接失效
+                setattr(user.extension, type_str, '')
+                user.save()
+    src_user.extension.home_help_num += success
     src_user.save()
-    return redirect('home')
+    return JsonResponse({'status': 'success', 'message': f'助力成功 {success} 次'})
