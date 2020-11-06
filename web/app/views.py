@@ -172,10 +172,9 @@ def help_star(request):
 
 def _help(request, type_str):
     """助力处理入口"""
-    if request.GET:
-        return _handle_help_get_request(request, type_str)
-    elif request.POST:
+    if request.POST:
         return _handle_help_post_request(request, type_str)
+    return _handle_help_get_request(request, type_str)
 
 
 def _handle_help_get_request(request, type_str):
