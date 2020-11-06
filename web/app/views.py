@@ -30,6 +30,10 @@ PATTERN = {
     'cbd': {
         'report':
         re.compile(r'(\d\d:\d\d:\d\d) \[帮助商圈助力\](....)！(.+)\((\d)\/\d\)')
+    },
+    'tm': {
+        'report':
+        re.compile(r'(\d\d:\d\d:\d\d) \[时光机助力\](....)！(.*)\((\d+)\/\d\)')
     }
 }
 
@@ -181,12 +185,17 @@ def _handle_help_get_request(request, type_str):
     num = 0 if num < 0 else num
     num = 5 if num > 5 else num
     today = datetime.date.today()
-    logs = Log.objects.filter(Q(help_type=LOG_TYPE[type_str])
-                              | Q(help_type=LOG_TYPE[type_str] + 4),
-                              source=request.user,
-                              date_time__contains=today).all()
+    if type_str == 'tm':  # 时光机助力只能帮助一次，不用分是否是今日的
+        logs = Log.objects.filter(Q(help_type=LOG_TYPE[type_str])
+                                  | Q(help_type=LOG_TYPE[type_str] + 4),
+                                  source=request.user).all()
+    else:
+        logs = Log.objects.filter(Q(help_type=LOG_TYPE[type_str])
+                                  | Q(help_type=LOG_TYPE[type_str] + 4),
+                                  source=request.user,
+                                  date_time__contains=today).all()
     already_helped_user_list = set([log.target.username for log in logs])
-    # 排除 未激活（被封）、用户自己、今日已助力过的、忽略的
+    # 排除 未激活（被封）、用户自己、今日已助力过 & 忽略的
     base_query = User.objects.exclude(
         Q(is_active=False) | Q(username=request.user.username)
         | Q(username__in=already_helped_user_list))
@@ -234,15 +243,18 @@ def _handle_help_post_request(request, type_str):
                 'status': 'error',
                 'message': '反馈结束数量与链接数不一致'
             })
-        if type_str == 'cbd' or type_str == 'home':
+        if type_str in ['cbd', 'home', 'tm']:
             # 解析反馈信息
-            for line in report.strip().split('\n'):
+            for i, line in enumerate(report.strip().split('\n')):
                 match = re.match(PATTERN[type_str]['report'], line.strip())
                 if match:
                     time = match.group(1)
                     result = match.group(2)
                     info = match.group(3)
-                    index = int(match.group(4)) - 1
+                    if type_str == 'tm':  # 时光机索引会出现 (23206264/1)
+                        index = len(data) - 1 - i
+                    else:
+                        index = int(match.group(4)) - 1
                     print(index, range(len(data)))
                     if index not in range(len(data)):
                         return JsonResponse({
@@ -280,8 +292,9 @@ def _handle_help_post_request(request, type_str):
                             'status': 'error',
                             'message': '本场挑战已结束'
                         })
-                    elif item['info'].startswith(
-                            '您今天已经帮') or item['info'].startswith('好友人气爆棚'):
+                    elif item['info'].startswith('您今天已经帮') \
+                        or item['info'].startswith('好友人气爆棚') \
+                            or item['info'].startswith('已为此人助力过'):
                         # 今日忽略该 ID
                         Log.objects.create(source=src_user,
                                            target=user,
