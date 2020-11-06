@@ -1,6 +1,7 @@
 # misc 
 .DS_Store
 
+# Editor
 .vscode/
 
 # Byte-compiled / optimized / DLL files
@@ -17,7 +18,7 @@ db.sqlite3-journal
 # Environments
 env/
 
+# Production
 .env.prod
 .env.prod.db
-
-static/
+./static/

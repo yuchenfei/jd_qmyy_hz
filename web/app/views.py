@@ -1,12 +1,12 @@
 import datetime
 import re
 
-from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User, AnonymousUser
+from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
 from django.db.models import Q
 from django.http import JsonResponse
+from django.shortcuts import redirect, render
 
 from .models import Log
 
@@ -262,7 +262,6 @@ def _handle_help_post_request(request, type_str):
                         'message': '执行结果解析异常，请检查结果是否复制正确'
                     })
             # 根据反馈情况处理链接
-            print(data)
             success = 0
             for item in data:
                 user = User.objects.get(username=item['id'])
@@ -272,22 +271,21 @@ def _handle_help_post_request(request, type_str):
                     setattr(user.extension, attr,
                             getattr(user.extension, attr) + 1)
                     user.save()
-                    log = Log.objects.create(source=src_user,
-                                             target=user,
-                                             help_type=LOG_TYPE[type_str])
+                    Log.objects.create(source=src_user,
+                                       target=user,
+                                       help_type=LOG_TYPE[type_str])
                 elif item['result'] == '操作成功':
                     if item['info'].startswith('谢谢你！本场挑战已结束'):
                         return JsonResponse({
                             'status': 'error',
                             'message': '本场挑战已结束'
                         })
-                    elif item['info'].startswith('您今天已经帮') or \
-                        item['info'].startswith('好友人气爆棚'):
+                    elif item['info'].startswith(
+                            '您今天已经帮') or item['info'].startswith('好友人气爆棚'):
                         # 今日忽略该 ID
-                        log = Log.objects.create(
-                            source=src_user,
-                            target=user,
-                            help_type=(LOG_TYPE[type_str] + 4))
+                        Log.objects.create(source=src_user,
+                                           target=user,
+                                           help_type=(LOG_TYPE[type_str] + 4))
                     elif item['info'].startswith('挑战已结束'):
                         # 链接过时
                         user.extension.cbd = ''
@@ -304,9 +302,9 @@ def _handle_help_post_request(request, type_str):
         attr = f'{type_str}_be_helped_num'
         setattr(user.extension, attr, getattr(user.extension, attr) + 1)
         user.save()
-        log = Log.objects.create(source=src_user,
-                                 target=user,
-                                 help_type=LOG_TYPE[type_str])
+        Log.objects.create(source=src_user,
+                           target=user,
+                           help_type=LOG_TYPE[type_str])
     attr = f'{type_str}_help_num'
     setattr(src_user.extension, attr,
             getattr(src_user.extension, attr) + len(id_list))
