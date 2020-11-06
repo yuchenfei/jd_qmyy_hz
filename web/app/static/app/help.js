@@ -8,7 +8,7 @@ $(document).ready(function () {
     $("#submit").click(function () {
         var report = $('#report').val()
         if (report) {
-            $("#error").addClass('hide')
+            $("#alert").addClass('hide')
             $.ajax({
                 url: $('#url').val(),
                 type: 'post',
@@ -40,8 +40,10 @@ $(document).ready(function () {
                 }
             })
         } else {
-            $("#error").html('请填写执行结果')
-            $("#error").removeClass('hide')
+            $("#alert").html('请填写执行结果')
+            $("#alert").removeClass('alert-info')
+            $("#alert").addClass('alert-danger')
+            $("#alert").removeClass('hide')
         }
     })
 })
