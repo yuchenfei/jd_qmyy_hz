@@ -266,6 +266,7 @@ def _handle_help_post_request(request, type_str):
                 'message': '执行结果解析异常，请检查结果是否复制正确'
             })
     # 根据反馈情况处理链接
+    print(data)
     success = 0
     for item in data:
         user = User.objects.get(username=item['id'])
@@ -278,6 +279,15 @@ def _handle_help_post_request(request, type_str):
                                target=user,
                                help_type=LOG_TYPE[type_str])
         elif item['result'] == '操作成功':
+            if item['info'] == '' and type_str == 'star':
+                success += 1
+                attr = f'{type_str}_be_helped_num'
+                setattr(user.extension, attr,
+                        getattr(user.extension, attr) + 1)
+                user.save()
+                Log.objects.create(source=src_user,
+                                   target=user,
+                                   help_type=LOG_TYPE[type_str])
             if item['info'].startswith('谢谢你！本场挑战已结束'):
                 return JsonResponse({'status': 'error', 'message': '本场挑战已结束'})
             elif item['info'].startswith('您今天已经帮') \
